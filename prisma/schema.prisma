@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model Ingredient {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  unit        String
+  stock       Float    @default(0)
+  minLevel    Float    @default(10)
+  costPerUnit Float    @default(0)
+  updatedAt   DateTime @updatedAt
+
+  recipes RecipeIngredient[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  price       Float
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ingredients RecipeIngredient[]
+  orderItems  OrderItem[]
+}
+
+model RecipeIngredient {
+  id           String @id @default(cuid())
+  productId    String
+  ingredientId String
+  quantity     Float
+
+  product    Product    @relation(fields: [productId], references: [id])
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([productId, ingredientId])
+}
+
+model Order {
+  id        String      @id @default(cuid())
+  status    String
+  total     Float
+  createdAt DateTime    @default(now())
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model AdminUser {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  username    String   @unique
+  password    String
+  role        String   @default("Admin")
+  status      String   @default("Active")
+  permissions String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Supplier {
+  id         String   @id @default(cuid())
+  name       String
+  contact    String?
+  email      String?
+  ingredient String?
+  status     String   @default("Active")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  admin     String
+  role      String
+  action    String
+  target    String
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      String   @default("system")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
